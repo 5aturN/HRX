@@ -1,0 +1,68 @@
+# HRXWarehouse — прод-раскатка: API + PostgreSQL 16.
+# Запуск:
+#   cp .env.example .env   # заполнить секреты (BOT_TOKEN, POSTGRES_PASSWORD)
+#   docker compose up --build
+# Проверка:  curl http://localhost:8000/api/ready
+# Снаружи ходим только на 8000 (или через Caddy, см. Caddyfile).
+# БД наружу не публикуем — доступна лишь внутри сети compose.
+
+services:
+  # База: PostgreSQL 16 на Alpine. Данные живут в именованном томе pgdata.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hrx}
+      POSTGRES_USER: ${POSTGRES_USER:-hrx}
+      # Значения по умолчанию — только для локального запуска,
+      # в проде задать POSTGRES_PASSWORD через .env (см. .env.example).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hrx}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Готовность СУБД; API стартует только после healthy db (см. depends_on).
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-hrx} -d $${POSTGRES_DB:-hrx}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # API: FastAPI + uvicorn, SPA раздаётся самим uvicorn (см. Dockerfile.backend).
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-hrx}:${POSTGRES_PASSWORD:-hrx}@db:5432/${POSTGRES_DB:-hrx}
+      DEV_ALLOW_UNAUTH: ${DEV_ALLOW_UNAUTH:-0}
+      UPLOAD_DIR: /srv/uploads
+      BACKUP_DIR: /srv/backups
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # BOT_TOKEN пробрасывается из .env как есть (пустой — бот просто не стартует).
+      BOT_TOKEN: ${BOT_TOKEN:-}
+    volumes:
+      # Файлы приёмки, копии бэкапов и логи переживают пересборку.
+      - uploads:/srv/uploads
+      - backups:/srv/backups
+      - logs:/srv/logs
+    healthcheck:
+      # /api/ready отвечает 200 только при живой БД (backend/app/main.py).
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/ready', timeout=5).status == 200 else 1)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  # pgdata — данные PostgreSQL; uploads — файлы приёмки;
+  # backups — выгрузки скрипта backend/scripts/backup.py; logs — логи.
+  pgdata:
+  uploads:
+  backups:
+  logs:

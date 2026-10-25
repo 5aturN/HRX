@@ -60,6 +60,7 @@ class Item(Base):
     unit: Mapped[str] = mapped_column(String(16), default="шт", nullable=False)
     threshold: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     notify_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+    low_notified: Mapped[bool] = mapped_column(default=False, nullable=False)
     supplier_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
     std_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     is_uncountable: Mapped[bool] = mapped_column(default=False, nullable=False)

@@ -1,5 +1,5 @@
-// Дизайн: глубокий синий + лайм Гидробота. Как на референсе: тёмные скруглённые экраны, светлые карточки.
-// Чёлка: safe-area везде. Светлая тема телеги тоже поддерживается.
+// Дизайн HRX: глубокий navy + лайм. Тёмная/светлая тема из Telegram themeParams,
+// safe-area (чёлка, низ), скелетоны, тосты, бейджи.
 export const T = {
   lime: "#dff83a",
   navy: "#1a1a2e",
@@ -12,15 +12,45 @@ export function tgColors() {
   const tg = (window as any).Telegram?.WebApp;
   const p = tg?.themeParams || {};
   const dark = tg?.colorScheme !== "light";
-  if (!dark) return { dark: false, bg: p.bg_color || "#f2f2f7", card: "#ffffff", card2: "#f2f2f7", text: "#000", muted: "#8e8e93", btn: p.button_color || "#007aff", btnText: "#fff", lime: "#dff83a" };
-  return { dark: true, bg: p.bg_color || "#1a1a2e", card: p.secondary_bg_color || "#23233f", card2: "#2e2e4d", text: p.text_color || "#fff", muted: p.hint_color || "#9a9ab0", btn: "#dff83a", btnText: "#111", lime: "#dff83a" };
+  if (!dark)
+    return {
+      dark: false,
+      bg: p.bg_color || "#f2f2f7",
+      card: "#ffffff",
+      card2: "#e9e9ee",
+      text: "#111111",
+      muted: "#8e8e93",
+      btn: p.button_color || "#007aff",
+      btnText: "#ffffff",
+      lime: "#dff83a",
+      border: "rgba(0,0,0,.08)",
+      danger: "#ff3b30",
+      ok: "#248a3d",
+    };
+  return {
+    dark: true,
+    bg: p.bg_color || "#1a1a2e",
+    card: p.secondary_bg_color || "#23233f",
+    card2: "#2e2e4d",
+    text: p.text_color || "#ffffff",
+    muted: p.hint_color || "#9a9ab0",
+    btn: "#dff83a",
+    btnText: "#111111",
+    lime: "#dff83a",
+    border: "rgba(255,255,255,.1)",
+    danger: "#ff453a",
+    ok: "#30d158",
+  };
 }
 
 const C = [
 '*{box-sizing:border-box}',
 'html,body{margin:0;padding:0}',
 'body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}',
-'.hrx-shell{min-height:100vh;min-height:100dvh;padding-bottom:120px}',
+':root{-webkit-tap-highlight-color:transparent}',
+'input,select,textarea{font-size:16px}',
+'img{-webkit-user-drag:none;user-select:none}',
+'.hrx-shell{min-height:100vh;min-height:100dvh;padding-bottom:120px;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}',
 '.hrx-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}',
 '.hrx-top img{width:34px;height:34px;border-radius:10px;background:#fff;object-fit:contain;flex-shrink:0}',
 '.hrx-top b{font-size:16px;font-weight:700}',
@@ -29,14 +59,15 @@ const C = [
 '.hrx-hero img{width:88px;height:88px;border-radius:24px;background:#fff;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,.35)}',
 '.hrx-hero h1{font-size:23px;margin:12px 0 2px;font-weight:800;letter-spacing:-.3px}',
 '.hrx-hero p{margin:0;font-size:13px;opacity:.55}',
-'.hrx-bal{margin:14px 16px 4px;border-radius:22px;padding:18px;background:linear-gradient(135deg,#2e2e5e,#1a1a2e);color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.3)}',
-'.hrx-bal small{font-size:12px;opacity:.6}',
+'.hrx-bal{margin:14px 16px 4px;border-radius:22px;padding:18px;background:linear-gradient(135deg,#33336b,#1a1a2e 70%);color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.3);border:.5px solid rgba(223,248,58,.18)}',
+'.hrx-bal small{font-size:12px;opacity:.65}',
 '.hrx-bal .n{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:2px 0}',
 '.hrx-bal .row{display:flex;gap:10px;margin-top:12px}',
 '.hrx-bal .qbtn{flex:1;border:none;border-radius:14px;padding:12px 4px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:600;cursor:pointer}',
 '.hrx-bal .qbtn:active{transform:scale(.96)}',
 '.hrx-bal .qbtn b{display:block;font-size:18px}',
-'.hrx-me{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:12px 16px;border-radius:20px}',
+'.hrx-me{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:12px 16px;border-radius:20px;cursor:pointer}',
+'.hrx-me:active{opacity:.6}',
 '.hrx-me img{width:52px;height:52px;border-radius:26px;object-fit:cover;background:rgba(128,128,128,.3)}',
 '.hrx-me .init{width:52px;height:52px;border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#111;background:#dff83a;flex-shrink:0}',
 '.hrx-me b{font-size:16px}',
@@ -61,6 +92,7 @@ const C = [
 '.hrx-panel{margin:12px 16px;border-radius:20px;padding:14px}',
 '.hrx-btn{display:block;font-size:16px;font-weight:700;padding:14px;width:100%;border-radius:15px;border:none;cursor:pointer;margin-top:8px}',
 '.hrx-btn:active{transform:scale(.98);opacity:.85}',
+'.hrx-btn:disabled{opacity:.5}',
 '.hrx-btn.ghost{background:transparent;border:1px solid rgba(128,128,128,.4)}',
 '.hrx-row{display:flex;gap:8px}',
 '.hrx-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}',
@@ -72,14 +104,29 @@ const C = [
 '.hrx-msg{padding:11px 14px;border-radius:13px;margin:8px 16px;font-size:14px;background:rgba(128,128,128,.14)}',
 '.hrx-progress{height:6px;border-radius:3px;background:rgba(128,128,128,.2);overflow:hidden;margin-top:6px}',
 '.hrx-progress i{display:block;height:100%;background:#dff83a;border-radius:3px}',
-'.hrx-tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:.5px solid rgba(128,128,128,.25);padding:8px 4px calc(10px + env(safe-area-inset-bottom))}',
+'.hrx-tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;align-items:flex-end;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:.5px solid rgba(128,128,128,.25);padding:8px 4px calc(10px + env(safe-area-inset-bottom));padding-left:calc(4px + env(safe-area-inset-left));padding-right:calc(4px + env(safe-area-inset-right))}',
 '.hrx-tabs button{flex:1;background:none;border:none;font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;opacity:.45}',
 '.hrx-tabs button.on{opacity:1}',
-'.hrx-tabs .e{font-size:23px;line-height:1}',
+'.hrx-tabs button svg{width:24px;height:24px;display:block}',
+'.hrx-fab{width:54px;height:54px;border-radius:27px;background:#dff83a;color:#111;display:flex;align-items:center;justify-content:center;margin-top:-26px;box-shadow:0 6px 22px rgba(223,248,58,.45);flex:none}',
+'.hrx-fab svg{width:26px;height:26px}',
 '.hrx-folder{margin:0 16px 8px;border-radius:16px;overflow:hidden}',
 '.hrx-folder-h{display:flex;align-items:center;gap:8px;width:100%;padding:13px 14px;border:none;font-size:15px;font-weight:700;cursor:pointer}',
-'.hrx-toast{position:fixed;top:calc(8px + env(safe-area-inset-top));left:16px;right:16px;z-index:50;border-radius:14px;padding:12px 16px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3)}',
+'.hrx-chev{display:inline-block;font-size:16px;opacity:.4;transition:transform .15s;flex-shrink:0}',
+'.hrx-chev.open{transform:rotate(90deg)}',
+'.hrx-toast{position:fixed;top:calc(8px + env(safe-area-inset-top));left:16px;right:16px;z-index:50;border-radius:14px;padding:12px 16px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:hrx-in .18s ease-out}',
+'.hrx-toast.ok{background:#dff83a;color:#111}',
+'.hrx-toast.err{background:#ff453a;color:#fff}',
+'@keyframes hrx-in{from{transform:translateY(-8px);opacity:0}}',
 '.hrx-skel{border-radius:12px;background:rgba(128,128,128,.18);animation:pulse 1.2s infinite}',
+'.hrx-skel.sk-card{height:150px;margin:14px 16px 4px;border-radius:22px}',
+'.hrx-skel.sk-line{height:64px;margin:12px 16px;border-radius:20px}',
+'.hrx-skel.sk-row{height:56px;margin:0 16px 8px;border-radius:16px}',
 '@keyframes pulse{50%{opacity:.5}}',
+'@media (prefers-reduced-motion:reduce){.hrx-skel{animation:none}.hrx-toast{animation:none}}',
+'.hrx-badge{min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:#ff453a;color:#fff;font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}',
+'.hrx-urgent{border-left:4px solid #ff453a}',
+'.hrx-empty{padding:26px 20px;text-align:center;opacity:.5;font-size:14px}',
+'.hrx-dot{width:9px;height:9px;border-radius:5px;flex-shrink:0}',
 ];
 export const css: string = C.join("\n");

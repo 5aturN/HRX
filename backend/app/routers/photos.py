@@ -18,6 +18,9 @@ router = APIRouter(prefix="/api", tags=["фото"])
 def _save_img(data: bytes, dest: Path, size: int = 800) -> None:
     """Жмём картинку до size по длинной стороне, сохраняем как JPEG."""
     img = Image.open(io.BytesIO(data))
+    pixels = img.width * img.height
+    if pixels > settings.MAX_IMAGE_PIXELS:
+        raise ValueError(f"Картинка слишком большая: {pixels} пикселей, предел {settings.MAX_IMAGE_PIXELS}")
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGB")
     img.thumbnail((size, size))
@@ -38,6 +41,8 @@ async def item_photo(item_id: int, file: UploadFile = File(...), session: AsyncS
     try:
         dest = Path(settings.UPLOAD_DIR) / "items" / f"{item_id}.jpg"
         _save_img(data, dest)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         log.exception("Не смог сохранить фото")
         raise HTTPException(status_code=400, detail="Это не картинка")
@@ -71,6 +76,8 @@ async def my_avatar(file: UploadFile = File(...), session: AsyncSession = Depend
     try:
         dest = Path(settings.UPLOAD_DIR) / "avatars" / f"{user.id}.jpg"
         _save_img(data, dest, size=256)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         raise HTTPException(status_code=400, detail="Это не картинка")
     user.avatar_path = str(dest)

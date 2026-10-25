@@ -1,0 +1,26 @@
+# HRXWarehouse — входная точка: авто-HTTPS и проксирование на API.
+#
+# Домен задаётся переменной окружения DOMAIN (см. .env.example):
+#   DOMAIN=sklad.example.com caddy run --config Caddyfile --adapter caddyfile
+# Локально можно без домена (будет обычный HTTP): DOMAIN=localhost.
+# Порты 80/443 должны быть свободны. Caddy сам выпустит сертификат
+# при настоящем домене; ничего настраивать не нужно.
+#
+# Важно про имя «api»: оно резолвится внутри docker-сети compose.
+# Если Caddy крутится на хосте (не в compose-сети), замените api:8000
+# на localhost:8000. Если добавите Caddy сервисом в compose —
+# имя api заработает как есть.
+
+{$DOMAIN:localhost} {
+	# Сжимаем ответы и пишем access-лог.
+	encode gzip
+	log
+
+	# Всё (REST API + SPA, которую раздаёт uvicorn) — на контейнер api.
+	# Активная проверка: /api/ready отвечает 200 только при живой БД.
+	reverse_proxy api:8000 {
+		health_uri /api/ready
+		health_interval 15s
+		health_timeout 5s
+	}
+}

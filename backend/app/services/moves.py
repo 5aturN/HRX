@@ -1,6 +1,5 @@
 """Сервис движений: брак, возврат, выдача в R&D, ручное списание химии, пороги и уведомления."""
 import logging
-import os
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,20 +15,22 @@ async def _get(session: AsyncSession, item_id: int) -> Item:
     return item
 
 async def _low_list(session: AsyncSession, ids: list[int]) -> list[Item]:
+    """Позиции ниже порога, о которых ещё не писали (флаг low_notified — защита от спама)."""
     out = []
     for i in ids:
         it = await session.get(Item, i)
-        if it and it.notify_enabled and it.qty <= it.threshold:
+        if it and it.notify_enabled and not it.low_notified and it.qty <= it.threshold:
             out.append(it)
     return out
 
 async def notify_low(items: list[Item], session: AsyncSession) -> int:
     """Шлём закупщикам + копия админу, кто упал ниже порога. Возвращаем сколько отправили."""
-    if not items or not settings.BOT_TOKEN:
-        if not settings.BOT_TOKEN:
-            log.info("BOT_TOKEN нет — уведомления пропускаем (текст в логе)")
-            for it in items:
-                log.info("Ниже порога: %s (%s): остаток %s, порог %s", it.sku, it.name, it.qty, it.threshold)
+    if not items:
+        return 0
+    if not settings.BOT_TOKEN:
+        log.info("BOT_TOKEN нет — уведомления пропускаем (текст в логе)")
+        for it in items:
+            log.info("Ниже порога: %s (%s): остаток %s, порог %s", it.sku, it.name, it.qty, it.threshold)
         return 0
     rows = (await session.execute(select(UserRole.user_id).where(UserRole.role.in_(["purchaser", "admin"])).distinct())).all()
     from app.models.tables import User
@@ -41,7 +42,7 @@ async def notify_low(items: list[Item], session: AsyncSession) -> int:
         lines = "\n".join(f"• {it.sku} ({it.name}): остаток {it.qty}, порог {it.threshold}" for it in items)
         text = f"Склад: ниже порога\n{lines}"
         try:
-            async with httpx.AsyncClient(timeout=10) as c:
+            async with httpx.AsyncClient(timeout=settings.TELEGRAM_NOTIFY_TIMEOUT) as c:
                 r = await c.post(f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
                                  json={"chat_id": u.tg_id, "text": text})
                 if r.status_code == 200:
@@ -49,6 +50,10 @@ async def notify_low(items: list[Item], session: AsyncSession) -> int:
         except Exception:
             log.exception("Не смог отправить уведомление tg %s", u.tg_id)
     log.info("Уведомлений отправлено: %s", sent)
+    if sent:
+        for it in items:
+            it.low_notified = True
+        await session.commit()
     return sent
 
 async def scrap(session: AsyncSession, item_id: int, qty: int, reason: str | None, user_id: int | None) -> Item:

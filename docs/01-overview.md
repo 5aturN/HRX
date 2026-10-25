@@ -22,7 +22,7 @@ pip install -r requirements.txt
 # .env.example скопировать в backend/.env, положить BOT_TOKEN (только локально)
 python create_db.py
 python seed.py
-..\.venv\Scripts\python -m pytest tests -q
+..\.venv\Scripts\python -m pytest tests -q   # 29/29 в 9 файлах
 ..\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 

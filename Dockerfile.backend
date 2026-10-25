@@ -1,0 +1,40 @@
+# HRXWarehouse — образ API (бэкенд + собранный фронтенд).
+# Сборка из корня репозитория:  docker build -f Dockerfile.backend -t hrx-api .
+
+# Этап 1: сборка фронтенда (Vite -> dist/), чтобы uvicorn раздавал SPA сам.
+# Путь проверен: backend/app/main.py монтирует <корень>/frontend/dist.
+FROM node:24-slim AS front-build
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+# tsc && vite build (см. frontend/package.json) — упадёт при ошибках типов.
+RUN npm run build
+
+# Этап 2: API на Python 3.14.
+FROM python:3.14-slim
+# Без .pyc и без буферизации — логи сразу видны в docker logs.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UPLOAD_DIR=/srv/uploads \
+    BACKUP_DIR=/srv/backups \
+    LOG_LEVEL=INFO
+WORKDIR /srv/backend
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r backend/requirements.txt
+# Только рантайм: миграции, код, конфиг alembic. Тесты и сиды в образ не кладём.
+COPY backend/alembic.ini ./
+COPY backend/alembic/ ./alembic/
+COPY backend/app/ ./app/
+COPY --from=front-build /app/dist/ /srv/frontend/dist/
+# Непривилегированный пользователь; каталоги под тома (именованные тома
+# наследуют владельца, поэтому запись будет работать).
+RUN useradd --create-home --shell /usr/sbin/nologin appuser \
+    && mkdir -p /srv/uploads /srv/backups /srv/logs \
+    && chown -R appuser:appuser /srv
+USER appuser
+EXPOSE 8000
+# При старте применяем миграции, затем поднимаем uvicorn.
+# backend/alembic/env.py строит движок из DATABASE_URL окружения,
+# поэтому upgrade head работает и с SQLite, и с PostgreSQL.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

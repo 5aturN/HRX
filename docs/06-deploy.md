@@ -27,4 +27,6 @@ D:\РАБОТА\HRX\HRXWarehouse\.tools\ngrok.exe http 8000
 - [ ] `alembic upgrade head`, `seed_catalog.py`.
 - [ ] Caddy 443 → 127.0.0.1:8000, белый IP, домен. Самоподписанные нельзя.
 - [ ] Токен из переписки отозван через BotFather.
-- [ ] `pytest` 25/25, `tsc` чистый.
+- [ ] `pytest` 29/29 в 9 файлах, `tsc` чистый, `dist` собран.
+- [ ] `alembic upgrade head` (0001..0005_low_notified) + `seed_catalog.py` + фото эталонов.
+- [ ] Контейнеров в репо нет (Dockerfile.backend/frontend, compose, Caddyfile, CI, backup.py отсутствуют): деплой без контейнеров — uvicorn через NSSM + Caddy вручную; бэкап — ручная копия `hrx.db` + `uploads/` (`BACKUP_DIR` создаёт lifespan, скрипта нет).

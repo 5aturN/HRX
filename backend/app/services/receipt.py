@@ -51,6 +51,9 @@ async def create_supply(session: AsyncSession, data: SupplyCreate, user_id: int 
         if item.kind != row.kind:
             raise ValueError(f"Артикул {row.sku} уже есть как {item.kind}, а пришёл как {row.kind}")
         item.qty += row.qty
+        if data.target == "stock" and item.low_notified:
+            # Пополнили — о низком остатке можно писать заново
+            item.low_notified = False
         session.add(SupplyItem(supply_id=supply.id, item_id=item.id, qty=row.qty))
         mtype = "prihod" if data.target == "stock" else "vydacha_rd"
         session.add(StockMove(item_id=item.id, mtype=mtype, qty=row.qty,

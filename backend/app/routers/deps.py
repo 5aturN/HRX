@@ -1,6 +1,6 @@
-"""Общие зависимости роутов: проверка initData, текуший пользователь, его роли."""
+"""Общие зависимости роутов: проверка initData, текущий пользователь, его роли."""
 import logging
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_session
@@ -9,7 +9,7 @@ from app.models.tables import User, UserRole
 
 log = logging.getLogger("hrx.deps")
 
-async def current_user(x_telegram_init_data: str = Header(default=""), session: AsyncSession = Depends(get_session)) -> User:
+async def current_user(request: Request, x_telegram_init_data: str = Header(default=""), session: AsyncSession = Depends(get_session)) -> User:
     """Достаёт юзера по initData. В DEV-режиме создаёт/находит dev-юзера."""
     data = check_init_data(x_telegram_init_data)
     if not data:
@@ -24,6 +24,8 @@ async def current_user(x_telegram_init_data: str = Header(default=""), session: 
         log.info("Новый пользователь tg_id=%s, ждёт активации", tg_id)
     if user.status == "blocked":
         raise HTTPException(status_code=403, detail="Доступ закрыт, обратитесь к админу")
+    if user.status == "pending" and request.url.path != "/api/me":
+        raise HTTPException(status_code=403, detail="Аккаунт на проверке: дождитесь активации админом")
     return user
 
 async def user_roles(user: User = Depends(current_user), session: AsyncSession = Depends(get_session)) -> list[str]:

@@ -2,7 +2,8 @@
 
 Заголовок везде: `X-Telegram-Init-Data`. Ошибки русским текстом.
 
-- `GET /api/health` — живой или нет.
+- `GET /api/health` — живой или нет (вне лимита).
+- `GET /api/ready` — готовность: 200 если база жива, 503 если мертва (вне лимита).
 - `POST /api/supplies` — приёмка. Повтор sku = плюс к остатку.
 - `GET /api/supplies` — список поставок.
 - `POST /api/supplies/{id}/docs?dtype=upd|invoice|transport|other` — файл до 10 МБ.
@@ -18,4 +19,6 @@
 - `GET /api/audit` (admin) — журнал действий.
 - `GET /api/report/excel?date_from=&date_to=` — Excel (Остатки + Движения).
 - `GET /api/users`, `POST /api/users/{id}/activate`, `POST /api/users/{id}/block` (admin) — люди.
-- `GET /api/orders`, `POST /api/orders` — заказы.
+- `GET /api/orders`, `POST /api/orders`, `POST /api/orders/{id}/status` — заказы (сборка всегда `order_id=null`, проброс остался в планах).
+- `GET /api/catalog`, `POST /api/catalog` (admin), `POST /api/catalog/{code}/photo` (admin), `GET /api/catalog/{code}/photo` — эталоны.
+- `GET /api/favorites`, `POST /api/favorites/{id}` — избранное. `GET /api/recent`, `GET /api/items/{id}/label` — лента и этикетка.

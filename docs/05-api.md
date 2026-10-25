@@ -4,7 +4,8 @@
 
 | Метод и путь | Что делает |
 |---|---|
-| `GET /api/health` | Живой или нет. |
+| `GET /api/health` | Живой или нет (вне лимита). |
+| `GET /api/ready` | Готовность: 200 если база жива, 503 если мертва (вне лимита, для мониторинга). |
 | `POST /api/supplies` | Приёмка (шапка + строки). |
 | `GET /api/supplies` | Список поставок. |
 | `POST /api/supplies/{id}/docs?dtype=` | Файл до 10 МБ (`upd \| invoice \| transport \| other`). |
@@ -24,3 +25,5 @@
 | `GET /api/orders`, `POST /api/orders` | Заказы. |
 
 Фото и кабинет: `POST /api/items/{id}/photo`, `GET /api/items/{id}/photo`, `POST /api/me/avatar`, `GET /api/users/{id}/avatar`, `GET /api/me`, `GET /api/folders/tree`, `GET /api/stats`.
+
+Каталог/избранное/прочее: `GET /api/catalog`, `POST /api/catalog` (admin), `POST /api/catalog/{code}/photo` (admin), `GET /api/catalog/{code}/photo`, `GET /api/favorites`, `POST /api/favorites/{id}`, `GET /api/recent`, `GET /api/items/{id}/label`, `POST /api/orders/{id}/status`. Всего 43 эндпоинта API (41 в роутерах + health/ready).
