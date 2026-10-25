@@ -22,9 +22,9 @@ export default function AssemblePage() {
     } catch (e: any) { setMsg("Ошибка: " + e.message); } };
   return (
     <div>
-      <h2>Сборка</h2>
+      <h2 style={{ margin: "8px 16px" }}>Сборка</h2>
       {prods.map((p) => (<button key={p.id} className="hrx-btn ghost" onClick={() => open(p.id)}>{p.name} (на складе {p.qty})</button>))}
-      {sel != null && (<div className="hrx-panel"><h3>Состав</h3>
+      {sel != null && (<div className="hrx-panel" style={{ margin: "12px 16px" }}><h3>Состав</h3>
         <ul>{comp.map((c) => (<li key={c.id} className={c.ok ? "hrx-ok" : "hrx-bad"}>{c.sku} — {c.name}: надо {c.need}, есть {c.have}</li>))}</ul>
         {chem.length > 0 && <div className="hrx-msg">Химия: {chem.map((c) => c.name).join(", ")}</div>}
         <div className="hrx-row"><input className="hrx-inp" type="number" min={1} max={100} value={qty} onChange={(e) => setQty(Number(e.target.value))} />

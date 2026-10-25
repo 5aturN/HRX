@@ -62,6 +62,7 @@ class Item(Base):
     notify_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
     supplier_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_uncountable: Mapped[bool] = mapped_column(default=False, nullable=False)
+    photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     qr_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     qr_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now, nullable=False)
@@ -218,6 +219,7 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     position: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    avatar_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now, nullable=False)
 

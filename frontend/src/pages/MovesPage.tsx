@@ -23,7 +23,7 @@ export default function MovesPage() {
   };
   return (
     <div>
-      <h2>Брак и возврат</h2>
+      <h2 style={{ margin: "8px 16px" }}>Брак и возврат</h2>
       <div className="hrx-row"><input className="hrx-inp" placeholder="Найти позицию..." value={q} onChange={(e) => setQ(e.target.value)} /><button className="hrx-btn" style={{ width: 120 }} onClick={find}>Найти</button></div>
       {items.slice(0, 8).map((i: any) => (<button key={i.id} className="hrx-btn ghost" onClick={() => setSel(i)}>{i.sku} — {i.name} (ост. {i.qty})</button>))}
       {sel && (<div className="hrx-panel"><b>{sel.sku} — {sel.name}</b>

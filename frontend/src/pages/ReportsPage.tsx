@@ -11,7 +11,7 @@ export default function ReportsPage() {
   const xl = () => { let q = "/api/report/excel?"; if (df) q += "date_from=" + df + "&"; if (dto) q += "date_to=" + dto; window.open(q, "_blank"); };
   return (
     <div>
-      <h2>Отчёты</h2>
+      <h2 style={{ margin: "8px 16px" }}>Отчёты</h2>
       <div className="hrx-row"><input className="hrx-inp" type="date" value={df} onChange={(e) => setDf(e.target.value)} /><input className="hrx-inp" type="date" value={dto} onChange={(e) => setDto(e.target.value)} /></div>
       <div className="hrx-row"><button className="hrx-btn ghost" onClick={load}>Показать</button><button className="hrx-btn" onClick={xl}>Excel</button></div>
       <table className="hrx-table"><thead><tr><th>Дата</th><th>Тип</th><th>Артикул</th><th>Кол.</th></tr></thead><tbody>
