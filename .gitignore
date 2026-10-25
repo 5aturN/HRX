@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+# Env/secrets
+.env
+# DB
+*.db
+*.db-*
+# Uploads (документы УПД, чертежи — только локально)
+uploads/*
+!uploads/.gitkeep
+# Frontend
+frontend/node_modules/
+frontend/dist/
+# Misc
+.DS_Store
