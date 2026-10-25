@@ -1,4 +1,4 @@
-// Экран заказов: список с прогрессом + создание. Сверху всегда "просто на склад".
+// Заказы: прогресс + создание. Сверху всегда на склад.
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -7,26 +7,16 @@ export default function OrdersPage({ onPick }: { onPick: (orderId: number | null
   const [cust, setCust] = useState("");
   const load = async () => setOrders(await api("/api/orders"));
   useEffect(() => { load(); }, []);
-  const add = async () => {
-    if (!cust.trim()) return;
-    await api("/api/orders", "", { customer: cust, items: [] });
-    setCust(""); load();
-  };
+  const add = async () => { if (!cust.trim()) return; await api("/api/orders", "", { customer: cust, items: [] }); setCust(""); load(); };
   return (
     <div>
       <h2>Заказы</h2>
-      <button style={{ fontSize: 20, padding: 16, width: "100%" }} onClick={() => onPick(null)}>Просто на склад (без заказа)</button>
-      {orders.map((o: any) => (
-        <div key={o.id} style={{ border: "1px solid #555", borderRadius: 8, padding: 8, margin: "8px 0" }}>
-          <b>{o.customer}</b> — {o.status}
-          <ul>{o.items.map((i: any, k: number) => <li key={k}>{i.product}: {i.done}/{i.need}</li>)}</ul>
-          <button style={{ fontSize: 18, padding: 12, width: "100%" }} onClick={() => onPick(o.id)}>Собирать в этот заказ</button>
-        </div>
-      ))}
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <input placeholder="Новый покупатель" value={cust} onChange={(e) => setCust(e.target.value)} style={{ fontSize: 18, padding: 12, flex: 1 }} />
-        <button style={{ fontSize: 18, padding: 12 }} onClick={add}>+</button>
-      </div>
+      <button className="hrx-btn lime" onClick={() => onPick(null)}>Просто на склад</button>
+      {orders.map((o: any) => { const need = o.items.reduce((s: number, i: any) => s + i.need, 0); const done = o.items.reduce((s: number, i: any) => s + i.done, 0); const pc = need ? Math.round((done / need) * 100) : 0;
+        return (<div key={o.id} className="hrx-panel"><b>{o.customer}</b> — {o.status}<div className="hrx-progress"><i style={{ width: pc + "%" }} /></div><small>{done}/{need} ({pc}%)</small>
+        <ul>{o.items.map((i: any, k: number) => (<li key={k}>{i.product}: {i.done}/{i.need}</li>))}</ul>
+        <button className="hrx-btn ghost" onClick={() => onPick(o.id)}>Собирать в этот заказ</button></div>); })}
+      <div className="hrx-row"><input className="hrx-inp" placeholder="Новый покупатель" value={cust} onChange={(e) => setCust(e.target.value)} /><button className="hrx-btn" style={{ width: 90 }} onClick={add}>+</button></div>
     </div>
   );
 }

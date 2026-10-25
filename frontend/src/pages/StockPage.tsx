@@ -1,4 +1,4 @@
-// Экран остатков: поиск + русские колонки + подсветка нехватки.
+// Остатки: поиск, русские колонки, подсветка нехватки.
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -12,21 +12,11 @@ export default function StockPage() {
   return (
     <div>
       <h2>Остатки</h2>
-      <div style={{ display: "flex", gap: 8 }}>
-        <input style={{ fontSize: 18, padding: 12, flex: 1 }} placeholder="Артикул, название, децимальный..." value={q} onChange={(e) => setQ(e.target.value)} />
-        <button style={{ fontSize: 18, padding: 12 }} onClick={load}>Найти</button>
-      </div>
-      <table style={{ width: "100%", marginTop: 12, borderCollapse: "collapse", fontSize: 15 }}>
-        <thead><tr><th>Артикул</th><th>Наименование</th><th>Остаток</th><th>Порог</th></tr></thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} style={{ background: r.low ? "#5a1a1a" : "transparent" }}>
-              <td>{r.sku}</td><td>{r.name}</td><td>{r.qty}</td><td>{r.threshold}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {rows.length === 0 && <p>Ничего не нашлось</p>}
+      <div className="hrx-row"><input className="hrx-inp" placeholder="Артикул, название, децимальный..." value={q} onChange={(e) => setQ(e.target.value)} /><button className="hrx-btn" style={{ width: 120 }} onClick={load}>Найти</button></div>
+      <table className="hrx-table"><thead><tr><th>Артикул</th><th>Наименование</th><th>Ост.</th><th>Порог</th></tr></thead><tbody>
+        {rows.map((r) => (<tr key={r.id} className={r.low ? "hrx-low" : ""}><td><b>{r.sku}</b><br /><small style={{ color: "#9a9aa5" }}>{r.folder}</small></td><td>{r.name}{r.low && <span className="hrx-bad"> Низко</span>}</td><td><b>{r.qty}</b></td><td>{r.threshold}</td></tr>))}
+      </tbody></table>
+      {rows.length === 0 && <div className="hrx-msg">Ничего не нашлось</div>}
     </div>
   );
 }
