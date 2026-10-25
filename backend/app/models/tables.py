@@ -1,6 +1,6 @@
 """Модели БД HRXWarehouse (шаг 1). Комментарии на русском. SQLite + async SQLAlchemy.
 
-Зафиксированные решения (см. README):
+Как устроено (подробности в README):
 - Остаток — items.qty (общая масса). supplies/supply_items — только история приходов.
 - QR — только заделы (qr_id/qr_payload nullable), в MVP не используются.
 - BOM единый: items(kind) + bom_items(parent,child,qty,version) + bom_chemistry(пометка).
@@ -236,7 +236,7 @@ class UserRole(Base):
 
 
 class Customer(Base):
-    """Покупатель (заказчик изделий)."""
+    """Покупатель."""
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
