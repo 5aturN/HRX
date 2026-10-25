@@ -130,3 +130,18 @@ async def add_order(body: dict, session: AsyncSession = Depends(get_session), us
     session.add(AuditLog(user_id=user.id, action="order_add", details=f"Заказ №{o.id}: {cname}"))
     await session.commit()
     return {"id": o.id}
+
+
+@router.post("/orders/{oid}/status", dependencies=[Depends(need_roles("worker"))])
+async def order_status(oid: int, body: dict, session: AsyncSession = Depends(get_session), user=Depends(current_user)):
+    """Статус заказа: new → work → done → shipped."""
+    o = await session.get(Order, oid)
+    if o is None:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    st = (body.get("status") or "").strip()
+    if st not in ("new", "work", "done", "shipped"):
+        raise HTTPException(status_code=400, detail="Статус: new, work, done, shipped")
+    o.status = st
+    session.add(AuditLog(user_id=user.id, action="order_status", details=f"Заказ №{oid} → {st}"))
+    await session.commit()
+    return {"id": o.id, "status": st}

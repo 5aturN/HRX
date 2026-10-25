@@ -1,4 +1,6 @@
-"""Фикстуры: каждому тесту свой файл БД, клиент ходит через ASGI (честный async)."""
+"""Фикстуры: DEV-режим для тестов, каждому тесту свой файл БД."""
+import os
+os.environ["DEV_ALLOW_UNAUTH"] = "1"
 import pytest_asyncio
 import httpx
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
