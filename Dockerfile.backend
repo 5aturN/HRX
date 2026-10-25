@@ -21,7 +21,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LOG_LEVEL=INFO
 WORKDIR /srv/backend
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 # Только рантайм: миграции, код, конфиг alembic. Тесты и сиды в образ не кладём.
 COPY backend/alembic.ini ./
 COPY backend/alembic/ ./alembic/
