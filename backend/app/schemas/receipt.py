@@ -41,3 +41,4 @@ class StockRow(BaseModel):
     qty: int
     threshold: int
     low: bool
+    has_photo: bool = False
