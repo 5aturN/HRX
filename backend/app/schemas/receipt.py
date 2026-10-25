@@ -7,11 +7,12 @@ class NewItemIn(BaseModel):
     """Одна строка поставки. kind: detail (наша, нужен decimal) или standard (покупная)."""
     kind: str = Field(pattern="^(detail|standard)$")
     sku: str = Field(min_length=1, max_length=100)
-    name: str = Field(min_length=1, max_length=300)
+    name: str = Field(default="", max_length=300)
     decimal: str | None = Field(default=None, max_length=100)
     folder_id: int
     qty: int = Field(gt=0)
     supplier_article: str | None = Field(default=None, max_length=100)
+    std_code: str | None = Field(default=None, max_length=50)
 
 class SupplyCreate(BaseModel):
     """Шапка поставки + строки. № счёта не уникален (повтор при доработке)."""
@@ -42,3 +43,4 @@ class StockRow(BaseModel):
     threshold: int
     low: bool
     has_photo: bool = False
+    std_code: str | None = None

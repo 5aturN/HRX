@@ -61,6 +61,7 @@ class Item(Base):
     threshold: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     notify_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
     supplier_article: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    std_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     is_uncountable: Mapped[bool] = mapped_column(default=False, nullable=False)
     photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     qr_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -278,3 +279,24 @@ class OrderItem(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("items.id", ondelete="RESTRICT"), nullable=False)
     need_qty: Mapped[int] = mapped_column(Integer, nullable=False)
     done_qty: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+
+class StdCatalog(Base):
+    """Эталон стандарта: код (DIN912), название, описание, фото. Фото одно на всех, кто выбрал этот код."""
+    __tablename__ = "std_catalog"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    std_code: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    descr: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class Favorite(Base):
+    """Избранное: своё у каждого пользователя (user_id + item_id уникальны)."""
+    __tablename__ = "favorites"
+    __table_args__ = (UniqueConstraint("user_id", "item_id", name="uq_fav_user_item"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id", ondelete="CASCADE"), nullable=False)

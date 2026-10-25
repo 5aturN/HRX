@@ -3,7 +3,7 @@ import datetime as dt
 import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.tables import Folder, Item, StockMove, Supply, SupplyItem, AuditLog
+from app.models.tables import Folder, Item, StdCatalog, StockMove, Supply, SupplyItem, AuditLog
 from app.schemas.receipt import SupplyCreate
 
 log = logging.getLogger("hrx.receipt")
@@ -31,14 +31,24 @@ async def create_supply(session: AsyncSession, data: SupplyCreate, user_id: int 
         folder = await session.get(Folder, row.folder_id)
         if folder is None:
             raise ValueError(f"Папка id={row.folder_id} не найдена")
+        std = None
+        std_code = (row.std_code or "").strip().upper() or None
+        if std_code:
+            std = (await session.execute(select(StdCatalog).where(StdCatalog.std_code == std_code))).scalar_one_or_none()
         item = (await session.execute(select(Item).where(Item.sku == row.sku))).scalar_one_or_none()
         if item is None:
-            item = Item(sku=row.sku, name=row.name, decimal=row.decimal, folder_id=row.folder_id,
-                        kind=row.kind, qty=0, supplier_article=row.supplier_article)
+            iname = (row.name or "").strip() or (std.title if std else row.sku)
+            item = Item(sku=row.sku, name=iname, decimal=row.decimal, folder_id=row.folder_id,
+                        kind=row.kind, qty=0, supplier_article=row.supplier_article, std_code=std_code,
+                        photo_path=(std.photo_path if std and std.photo_path else None))
             session.add(item)
             await session.flush()
-            log.info("Новая позиция: %s (%s)", row.sku, row.name)
-        elif item.kind != row.kind:
+            log.info("Новая позиция: %s (%s)", row.sku, iname)
+        elif not item.std_code and std_code:
+            item.std_code = std_code
+            if std and std.photo_path and not item.photo_path:
+                item.photo_path = std.photo_path
+        if item.kind != row.kind:
             raise ValueError(f"Артикул {row.sku} уже есть как {item.kind}, а пришёл как {row.kind}")
         item.qty += row.qty
         session.add(SupplyItem(supply_id=supply.id, item_id=item.id, qty=row.qty))

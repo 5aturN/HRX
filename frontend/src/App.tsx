@@ -10,9 +10,11 @@ import MovesPage from "./pages/MovesPage";
 import HomePage from "./pages/HomePage";
 import WarehousePage from "./pages/WarehousePage";
 import ProfilePage from "./pages/ProfilePage";
+import CatalogPage from "./pages/CatalogPage";
+import FavsPage from "./pages/FavsPage";
 import { css, tgColors } from "./theme";
 
-type Tab = "home" | "receipt" | "warehouse" | "assemble" | "orders" | "moves" | "reports" | "profile";
+type Tab = "home" | "receipt" | "warehouse" | "assemble" | "orders" | "moves" | "reports" | "profile" | "catalog" | "favs";
 
 const TABS: { id: Tab; e: string; label: string }[] = [
   { id: "home", e: "H", label: "Главная" },
@@ -51,6 +53,8 @@ export default function App() {
       {tab === "moves" && <MovesPage />}
       {tab === "reports" && <ReportsPage />}
       {tab === "profile" && <ProfilePage />}
+      {tab === "catalog" && <CatalogPage />}
+      {tab === "favs" && <FavsPage />}
       <div className="hrx-tabs" style={{ background: c.card }}>
         {TABS.map((t) => (<button key={t.id} className={tab === t.id ? "on" : ""} style={{ color: tab === t.id ? "#007aff" : c.text }} onClick={() => go(t.id)}><span className="e">{t.e}</span>{t.label}</button>))}
       </div>

@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy import select
 from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
@@ -50,9 +51,16 @@ async def item_photo(item_id: int, file: UploadFile = File(...), session: AsyncS
 async def get_item_photo(item_id: int, session: AsyncSession = Depends(get_session), user=Depends(current_user)):
     """Отдать фото позиции (или 404 — фронт покажет заглушку)."""
     it = await session.get(Item, item_id)
-    if it is None or not it.photo_path or not Path(it.photo_path).exists():
-        raise HTTPException(status_code=404, detail="Фото нет")
-    return FileResponse(it.photo_path, media_type="image/jpeg")
+    if it is None:
+        raise HTTPException(status_code=404, detail="Позиция не найдена")
+    if it.photo_path and Path(it.photo_path).exists():
+        return FileResponse(it.photo_path, media_type="image/jpeg")
+    if it.std_code:
+        from app.models.tables import StdCatalog
+        std = (await session.execute(select(StdCatalog).where(StdCatalog.std_code == it.std_code))).scalar_one_or_none()
+        if std and std.photo_path and Path(std.photo_path).exists():
+            return FileResponse(std.photo_path, media_type="image/jpeg")
+    raise HTTPException(status_code=404, detail="Фото нет")
 
 @router.post("/me/avatar")
 async def my_avatar(file: UploadFile = File(...), session: AsyncSession = Depends(get_session), user=Depends(current_user)):
