@@ -4,12 +4,13 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from .core.logging_conf import setup_logging
-from .routers import assemble, receipt
+from .routers import assemble, moves, receipt
 
 log = setup_logging()
 app = FastAPI(title="HRXWarehouse")
 app.include_router(receipt.router)
 app.include_router(assemble.router)
+app.include_router(moves.router)
 
 @app.get("/api/health")
 async def health():
