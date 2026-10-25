@@ -290,3 +290,13 @@ class StdCatalog(Base):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     descr: Mapped[str | None] = mapped_column(String(500), nullable=True)
     photo_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class Favorite(Base):
+    """Избранное: своё у каждого пользователя (user_id + item_id уникальны)."""
+    __tablename__ = "favorites"
+    __table_args__ = (UniqueConstraint("user_id", "item_id", name="uq_fav_user_item"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id", ondelete="CASCADE"), nullable=False)

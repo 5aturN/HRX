@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api", tags=["сборка"])
 async def products(session: AsyncSession = Depends(get_session), user=Depends(current_user)):
     """Изделия и подсборки (что можно собирать)."""
     rows = (await session.execute(select(Item).where(Item.kind.in_(["product", "subassembly"])).order_by(Item.name))).scalars().all()
-    return [{"id": i.id, "sku": i.sku, "name": i.name, "kind": i.kind, "qty": i.qty} for i in rows]
+    return [{"id": i.id, "sku": i.sku, "name": i.name, "kind": i.kind, "qty": i.qty, "has_photo": bool(i.photo_path or i.std_code)} for i in rows]
 
 @router.get("/products/{pid}/bom")
 async def bom(pid: int, session: AsyncSession = Depends(get_session), user=Depends(current_user)):
@@ -28,12 +28,12 @@ async def bom(pid: int, session: AsyncSession = Depends(get_session), user=Depen
     comp = []
     for r in rows:
         c = await session.get(Item, r.child_id)
-        comp.append({"id": c.id, "sku": c.sku, "name": c.name, "need": r.qty, "have": c.qty, "ok": c.qty >= r.qty})
+        comp.append({"id": c.id, "sku": c.sku, "name": c.name, "need": r.qty, "have": c.qty, "ok": c.qty >= r.qty, "has_photo": bool(c.photo_path or c.std_code)})
     chem = (await session.execute(select(BomChemistry).where(BomChemistry.parent_id == pid))).scalars().all()
     chem_out = []
     for ch in chem:
         chem_item = await session.get(Item, ch.chemical_id)
-        chem_out.append({"name": chem_item.name if chem_item else "?", "note": ch.note})
+        chem_out.append({"id": chem_item.id if chem_item else None, "name": chem_item.name if chem_item else "?", "note": ch.note, "has_photo": bool(chem_item and (chem_item.photo_path or chem_item.std_code))})
     return {"product": {"sku": item.sku, "name": item.name, "qty": item.qty}, "components": comp, "chemistry": chem_out}
 
 @router.post("/assemble/check", response_model=AssembleCheck)

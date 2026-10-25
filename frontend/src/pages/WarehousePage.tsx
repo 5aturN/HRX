@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { tgColors } from "../theme";
+import FavStar from "../components/FavStar";
 
 function Node({ n, depth }: { n: any; depth: number }) {
   const [open, setOpen] = useState(depth < 1);
@@ -15,7 +16,7 @@ function Node({ n, depth }: { n: any; depth: number }) {
       {open && (<div>
         {(n.items || []).map((i: any) => (<div key={i.id} className="hrx-cell">
           {i.has_photo ? (<img className="hrx-thumb" src={"/api/items/" + i.id + "/photo"} alt="" />) : (<div className="hrx-thumb ph">?</div>)}
-          <span className="tx">{i.name}<small>{i.sku} · ост. {i.qty}</small></span>
+          <span className="tx">{i.name}<small>{i.sku} · ост. {i.qty}</small></span><FavStar itemId={i.id} />
         </div>))}
         {(n.children || []).map((k: any) => (<Node key={k.id} n={k} depth={depth + 1} />))}
       </div>)}
