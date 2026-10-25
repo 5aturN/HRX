@@ -35,6 +35,7 @@ export default function HomePage({ go }: { go: (t: any) => void }) {
       <div className="hrx-list" style={{ background: c.card, color: c.text }}>
         <button className="hrx-cell" onClick={() => go("moves")}><span className="tx">Брак и возврат</span></button>
         <button className="hrx-cell" onClick={() => go("reports")}><span className="tx">Отчеты</span></button>
+        <button className="hrx-cell" onClick={() => go("catalog")}><span className="tx">Стандарты</span></button>
         <button className="hrx-cell" onClick={() => go("admin")}><span className="tx">Люди</span></button>
       </div>
     </div>

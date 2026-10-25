@@ -98,6 +98,8 @@ async def stock(q: str = Query(default=""), folder_id: int | None = None, low_on
         low = item.notify_enabled and item.qty <= item.threshold
         if low_only and not low:
             continue
+        has_ph = bool(item.photo_path) or bool(item.std_code)
         out.append(StockRow(id=item.id, sku=item.sku, name=item.name, decimal=item.decimal,
-                            folder=folder, qty=item.qty, threshold=item.threshold, low=low, has_photo=bool(item.photo_path)))
+                            folder=folder, qty=item.qty, threshold=item.threshold, low=low, has_photo=has_ph,
+                            std_code=item.std_code))
     return out
