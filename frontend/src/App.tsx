@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import ReceiptPage from "./pages/ReceiptPage";
 import StockPage from "./pages/StockPage";
+import AssemblePage from "./pages/AssemblePage";
 
 export default function App() {
   const [user, setUser] = useState("Гость");
-  const [tab, setTab] = useState<"receipt" | "stock">("receipt");
+  const [tab, setTab] = useState<"receipt" | "stock" | "assemble">("receipt");
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -24,8 +25,9 @@ export default function App() {
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <button style={tabBtn(tab === "receipt")} onClick={() => setTab("receipt")}>Приёмка</button>
         <button style={tabBtn(tab === "stock")} onClick={() => setTab("stock")}>Остатки</button>
+        <button style={tabBtn(tab === "assemble")} onClick={() => setTab("assemble")}>Сборка</button>
       </div>
-      {tab === "receipt" ? <ReceiptPage onDone={() => setRefresh(refresh + 1)} /> : <StockPage key={refresh} />}
+      {tab === "receipt" ? <ReceiptPage onDone={() => setRefresh(refresh + 1)} /> : tab === "stock" ? <StockPage key={refresh} /> : <AssemblePage />}
     </main>
   );
 }
