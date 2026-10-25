@@ -22,3 +22,5 @@
 | `GET /api/report/excel?date_from=&date_to=` | Excel: Остатки + Движения. |
 | `GET /api/users`, `POST /api/users/{id}/activate`, `POST /api/users/{id}/block` | Люди (админ). |
 | `GET /api/orders`, `POST /api/orders` | Заказы. |
+
+Фото и кабинет: `POST /api/items/{id}/photo`, `GET /api/items/{id}/photo`, `POST /api/me/avatar`, `GET /api/users/{id}/avatar`, `GET /api/me`, `GET /api/folders/tree`, `GET /api/stats`.

@@ -25,3 +25,5 @@ React + TypeScript + Vite. Собирается в `frontend/dist`, бэк ра�
 ## Связь с бэком (`src/api/client.ts`)
 
 Один `fetch`: относительный путь `/api/...`, заголовок `X-Telegram-Init-Data` из `Telegram.WebApp.initData`. Задел под сканер: `<ScanButton onScan={...} />` (в будущем `@yudiel/react-qr-scanner`).
+
+Фото: позиции (`POST /api/items/{id}/photo`), аватары (`POST /api/me/avatar`), отдача через `/api/.../photo` и `/api/users/{id}/avatar`. Фронт показывает миниатюры в складе и кабинете, без фото — заглушка. Картинки жмутся до 800px (аватары 256px) через Pillow.
