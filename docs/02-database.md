@@ -37,3 +37,5 @@ folders (1) ──< items >── bom_items (parent/child)
                 └── drawings, bom_chemistry
 users ── user_roles, stock_moves, audit_log
 ```
+
+Фото: `items.photo_path`, `users.avatar_path` (миграция `0002_photos`). Файлы в `uploads/items/` и `uploads/avatars/`, в git не попадают.
