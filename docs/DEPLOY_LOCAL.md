@@ -1,4 +1,4 @@
-# Запуск у себя
+.\.venv\Scripts\Activate.ps1# Запуск у себя
 
 1. Python 3.14, Node 24.
 2. `cd backend; python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt`

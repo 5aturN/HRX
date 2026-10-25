@@ -1,4 +1,4 @@
-// Склад Гидробот: стиль iOS-списков, главная, склад, кабинет.
+// Каркас: шапка с логотипом, тосты, вкладки.
 import { useEffect, useState } from "react";
 import ReceiptPage from "./pages/ReceiptPage";
 import StockPage from "./pages/StockPage";
@@ -20,9 +20,23 @@ const TABS: { id: Tab; e: string; label: string }[] = [
   { id: "home", e: "H", label: "Главная" },
   { id: "warehouse", e: "W", label: "Склад" },
   { id: "assemble", e: "A", label: "Сборка" },
-  { id: "receipt", e: "+", label: "Приемка" },
+  { id: "receipt", e: "+", label: "Приёмка" },
   { id: "profile", e: "U", label: "Кабинет" },
 ];
+
+export function toast(msg: string, ok = true) {
+  let el = document.getElementById("hrx-toast");
+  if (!el) { el = document.createElement("div"); el.id = "hrx-toast"; document.body.appendChild(el); }
+  const c = tgColors();
+  el.className = "hrx-toast";
+  el.style.background = ok ? "#dff83a" : "#ff453a";
+  el.style.color = ok ? "#111" : "#fff";
+  el.textContent = msg;
+  el.style.display = "block";
+  (window as any).__hrxToast && clearTimeout((window as any).__hrxToast);
+  (window as any).__hrxToast = setTimeout(() => { el!.style.display = "none"; }, 2200);
+  void c;
+}
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("home");
@@ -30,6 +44,9 @@ export default function App() {
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     tg?.ready(); tg?.expand();
+    try { tg?.disableVerticalSwipes?.(); } catch {}
+    try { tg?.setHeaderColor?.("bg_color"); } catch {}
+    try { tg?.setBackgroundColor?.("#1a1a2e"); } catch {}
     const c = tgColors();
     document.body.style.background = c.bg;
     document.body.style.color = c.text;
@@ -41,13 +58,13 @@ export default function App() {
   const c = tgColors();
   return (
     <div className="hrx-shell">
-      <div className="hrx-top" style={{ background: c.card, color: c.text }}>
+      <div className="hrx-top" style={{ background: c.bg, color: c.text }}>
         <img src="/logo.png" alt="Гидробот" />
-        <b>Склад Гидробот</b>
+        <div><b>Склад Гидробот</b><small>производство</small></div>
       </div>
       {tab === "home" && <HomePage go={go} />}
-      {tab === "receipt" && (<div><ReceiptPage onDone={() => setRefresh(refresh + 1)} /></div>)}
-      {tab === "warehouse" && <WarehousePage />}
+      {tab === "receipt" && <ReceiptPage onDone={() => setRefresh(refresh + 1)} />}
+      {tab === "warehouse" && <WarehousePage key={refresh} />}
       {tab === "assemble" && <AssemblePage />}
       {tab === "orders" && <OrdersPage onPick={() => go("assemble")} />}
       {tab === "moves" && <MovesPage />}
@@ -55,8 +72,8 @@ export default function App() {
       {tab === "profile" && <ProfilePage />}
       {tab === "catalog" && <CatalogPage />}
       {tab === "favs" && <FavsPage />}
-      <div className="hrx-tabs" style={{ background: c.card }}>
-        {TABS.map((t) => (<button key={t.id} className={tab === t.id ? "on" : ""} style={{ color: tab === t.id ? "#007aff" : c.text }} onClick={() => go(t.id)}><span className="e">{t.e}</span>{t.label}</button>))}
+      <div className="hrx-tabs" style={{ background: c.bg }}>
+        {TABS.map((t) => (<button key={t.id} className={tab === t.id ? "on" : ""} style={{ color: tab === t.id ? "#dff83a" : c.text }} onClick={() => go(t.id)}><span className="e">{t.e}</span>{t.label}</button>))}
       </div>
     </div>
   );

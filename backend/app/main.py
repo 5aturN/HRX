@@ -7,7 +7,10 @@ from .core.logging_conf import setup_logging
 from .routers import admin, assemble, catalog, extra, favorites, folders, moves, photos, receipt, stats
 
 log = setup_logging()
-app = FastAPI(title="HRXWarehouse")
+app = FastAPI(title="HRXWarehouse", docs_url=None, redoc_url=None, openapi_url=None)
+from .core.config import settings as _s
+from .core.limits import RateLimit
+app.add_middleware(RateLimit, per_min=_s.RATE_LIMIT_PER_MIN)
 app.include_router(receipt.router)
 app.include_router(assemble.router)
 app.include_router(moves.router)
