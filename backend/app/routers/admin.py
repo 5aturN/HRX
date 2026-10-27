@@ -14,22 +14,31 @@ from app.services.reports import MTYPE_RU, build_excel
 log = logging.getLogger("hrx.routers.admin")
 router = APIRouter(prefix="/api", tags=["отчёты"])
 
+def _parse_date(value: str | None, field: str) -> dt.date | None:
+    if value is None:
+        return None
+    try:
+        return dt.date.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{field} должен быть датой в формате ГГГГ-ММ-ДД") from exc
+
+
 @router.get("/moves")
 async def moves(date_from: str | None = None, date_to: str | None = None, mtype: str | None = None,
                 session: AsyncSession = Depends(get_session), user=Depends(current_user)):
     """Движения с фильтрами (дата, тип). Русские названия типов."""
-    rows = (await session.execute(select(StockMove, Item).join(Item, Item.id == StockMove.item_id).order_by(StockMove.id.desc()).limit(1000))).all()
-    df = dt.date.fromisoformat(date_from) if date_from else None
-    dto = dt.date.fromisoformat(date_to) if date_to else None
+    stmt = select(StockMove, Item).join(Item, Item.id == StockMove.item_id).order_by(StockMove.id.desc())
+    df = _parse_date(date_from, "date_from")
+    dto = _parse_date(date_to, "date_to")
+    if df:
+        stmt = stmt.where(StockMove.created_at >= dt.datetime.combine(df, dt.time.min))
+    if dto and dto < dt.date.max:
+        stmt = stmt.where(StockMove.created_at < dt.datetime.combine(dto + dt.timedelta(days=1), dt.time.min))
+    if mtype:
+        stmt = stmt.where(StockMove.mtype == mtype)
+    rows = (await session.execute(stmt.limit(1000))).all()
     out = []
     for m, it in rows:
-        day = m.created_at.date() if m.created_at else None
-        if df and day and day < df:
-            continue
-        if dto and day and day > dto:
-            continue
-        if mtype and m.mtype != mtype:
-            continue
         out.append({"id": m.id, "date": m.created_at.isoformat() if m.created_at else None,
                     "mtype": m.mtype, "mtype_ru": MTYPE_RU.get(m.mtype, m.mtype),
                     "sku": it.sku, "name": it.name, "qty": m.qty, "reason": m.reason, "order_id": m.order_id})
@@ -46,8 +55,8 @@ async def audit(session: AsyncSession = Depends(get_session), user=Depends(curre
 async def excel(date_from: str | None = None, date_to: str | None = None,
                 session: AsyncSession = Depends(get_session), user=Depends(current_user)):
     """Скачать Excel: Остатки + Движения за период."""
-    df = dt.date.fromisoformat(date_from) if date_from else None
-    dto = dt.date.fromisoformat(date_to) if date_to else None
+    df = _parse_date(date_from, "date_from")
+    dto = _parse_date(date_to, "date_to")
     data = await build_excel(session, df, dto)
     log.info("Отчёт Excel выдан пользователю %s", user.id)
     return StreamingResponse(io.BytesIO(data), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -111,9 +120,36 @@ async def orders(session: AsyncSession = Depends(get_session), user=Depends(curr
 @router.post("/orders", dependencies=[Depends(need_roles("worker"))])
 async def add_order(body: dict, session: AsyncSession = Depends(get_session), user=Depends(current_user)):
     """Создать заказ может любой (права делим позже)."""
-    cname = (body.get("customer") or "").strip()
-    if not cname:
+    raw_customer = body.get("customer")
+    if not isinstance(raw_customer, str) or not raw_customer.strip():
         raise HTTPException(status_code=400, detail="Укажите покупателя")
+    cname = raw_customer.strip()
+    raw_lines = body.get("items")
+    if raw_lines is None:
+        lines = []
+    elif not isinstance(raw_lines, list):
+        raise HTTPException(status_code=400, detail="Позиции заказа должны быть списком")
+    else:
+        lines = raw_lines
+    order_lines: list[tuple[int, int]] = []
+    seen_products: set[int] = set()
+    for line in lines:
+        if not isinstance(line, dict):
+            raise HTTPException(status_code=400, detail="Строка заказа должна быть объектом")
+        product_id = line.get("product_id")
+        need = line.get("need", 1)
+        if isinstance(product_id, bool) or not isinstance(product_id, int):
+            raise HTTPException(status_code=400, detail="product_id должен быть целым числом")
+        if isinstance(need, bool) or not isinstance(need, int) or need < 1 or need > 100000:
+            raise HTTPException(status_code=400, detail="Количество в заказе должно быть целым числом от 1 до 100000")
+        if product_id in seen_products:
+            raise HTTPException(status_code=400, detail="Изделие нельзя указать в заказе дважды")
+        prod = await session.get(Item, product_id)
+        if prod is None or prod.kind not in ("product", "subassembly"):
+            raise HTTPException(status_code=400, detail="В заказ можно только изделия")
+        seen_products.add(product_id)
+        order_lines.append((prod.id, need))
+
     cust = (await session.execute(select(Customer).where(Customer.name == cname))).scalar_one_or_none()
     if cust is None:
         cust = Customer(name=cname, contact=body.get("contact"))
@@ -122,11 +158,7 @@ async def add_order(body: dict, session: AsyncSession = Depends(get_session), us
     o = Order(customer_id=cust.id, status="new", note=body.get("note"), created_by=user.id)
     session.add(o)
     await session.flush()
-    for line in body.get("items") or []:
-        prod = await session.get(Item, line.get("product_id"))
-        if prod is None or prod.kind not in ("product", "subassembly"):
-            raise HTTPException(status_code=400, detail="В заказ можно только изделия")
-        session.add(OrderItem(order_id=o.id, product_id=prod.id, need_qty=int(line.get("need", 1))))
+    session.add_all([OrderItem(order_id=o.id, product_id=product_id, need_qty=need) for product_id, need in order_lines])
     session.add(AuditLog(user_id=user.id, action="order_add", details=f"Заказ №{o.id}: {cname}"))
     await session.commit()
     return {"id": o.id}
@@ -138,7 +170,10 @@ async def order_status(oid: int, body: dict, session: AsyncSession = Depends(get
     o = await session.get(Order, oid)
     if o is None:
         raise HTTPException(status_code=404, detail="Заказ не найден")
-    st = (body.get("status") or "").strip()
+    raw_status = body.get("status")
+    if not isinstance(raw_status, str):
+        raise HTTPException(status_code=400, detail="Статус должен быть строкой: new, work, done, shipped")
+    st = raw_status.strip()
     if st not in ("new", "work", "done", "shipped"):
         raise HTTPException(status_code=400, detail="Статус: new, work, done, shipped")
     o.status = st

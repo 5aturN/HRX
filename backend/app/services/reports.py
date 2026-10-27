@@ -34,14 +34,13 @@ async def build_excel(session: AsyncSession, date_from: dt.date | None, date_to:
     ws2.append(["Дата", "Тип", "Артикул", "Наименование", "Кол-во", "Причина", "Инициатор", "Заказ"])
     for c in ws2[1]:
         c.font = Font(bold=True)
-    stmt = select(StockMove, Item, User).join(Item, Item.id == StockMove.item_id).outerjoin(User, User.id == StockMove.user_id).order_by(StockMove.id.desc()).limit(5000)
-    rows = (await session.execute(stmt)).all()
+    stmt = select(StockMove, Item, User).join(Item, Item.id == StockMove.item_id).outerjoin(User, User.id == StockMove.user_id).order_by(StockMove.id.desc())
+    if date_from:
+        stmt = stmt.where(StockMove.created_at >= dt.datetime.combine(date_from, dt.time.min))
+    if date_to and date_to < dt.date.max:
+        stmt = stmt.where(StockMove.created_at < dt.datetime.combine(date_to + dt.timedelta(days=1), dt.time.min))
+    rows = (await session.execute(stmt.limit(5000))).all()
     for m, it, u in rows:
-        day = m.created_at.date() if m.created_at else None
-        if date_from and day and day < date_from:
-            continue
-        if date_to and day and day > date_to:
-            continue
         ws2.append([m.created_at.strftime("%d.%m.%Y %H:%M") if m.created_at else "",
                     MTYPE_RU.get(m.mtype, m.mtype), it.sku, it.name, m.qty,
                     m.reason or "", (u.first_name or u.username or "") if u else "",

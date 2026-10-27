@@ -1,7 +1,7 @@
 """Сервис движений: брак, возврат, выдача в R&D, ручное списание химии, пороги и уведомления."""
 import logging
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.tables import AuditLog, Folder, Item, StockMove, UserRole
@@ -19,6 +19,8 @@ async def _low_list(session: AsyncSession, ids: list[int]) -> list[Item]:
     out = []
     for i in ids:
         it = await session.get(Item, i)
+        if it:
+            await session.refresh(it)
         if it and it.notify_enabled and not it.low_notified and it.qty <= it.threshold:
             out.append(it)
     return out
@@ -56,14 +58,25 @@ async def notify_low(items: list[Item], session: AsyncSession) -> int:
         await session.commit()
     return sent
 
+async def _decrement(session: AsyncSession, item_id: int, qty: int, message: str) -> Item:
+    """Атомарно уменьшает остаток и не допускает гонку check-then-update."""
+    if qty <= 0:
+        raise ValueError("Количество должно быть положительным")
+    changed = (await session.execute(
+        update(Item).where(Item.id == item_id, Item.qty >= qty).values(qty=Item.qty - qty)
+    )).rowcount
+    if changed != 1:
+        it = await _get(session, item_id)
+        raise ValueError(f"{message}: на складе {it.qty}, запрошено {qty}")
+    it = await _get(session, item_id)
+    await session.refresh(it)
+    return it
+
 async def scrap(session: AsyncSession, item_id: int, qty: int, reason: str | None, user_id: int | None) -> Item:
     """В брак: минус из общей массы, причина обязательна."""
     if not reason:
         raise ValueError("Укажите причину брака")
-    it = await _get(session, item_id)
-    if it.qty < qty:
-        raise ValueError(f"На складе {it.qty}, а в брак просят {qty}")
-    it.qty -= qty
+    it = await _decrement(session, item_id, qty, "В брак просят")
     session.add(StockMove(item_id=it.id, mtype="brak", qty=qty, reason=reason, user_id=user_id))
     session.add(AuditLog(user_id=user_id, action="brak", details=f"{it.sku}: в брак {qty}, причина: {reason}"))
     await session.commit()
@@ -87,9 +100,7 @@ async def to_project(session: AsyncSession, item_id: int, qty: int, project_fold
     folder = await session.get(Folder, project_folder_id)
     if folder is None or folder.ftype != "rnd_project":
         raise ValueError("Проект не найден")
-    if it.qty < qty:
-        raise ValueError(f"На складе {it.qty}, а просят {qty}")
-    it.qty -= qty
+    it = await _decrement(session, item_id, qty, "В проект просят")
     session.add(StockMove(item_id=it.id, mtype="vydacha_rd", qty=qty,
                           reason=f"В проект {folder.name}", project_folder_id=project_folder_id, user_id=user_id))
     session.add(AuditLog(user_id=user_id, action="vydacha_rd", details=f"{it.sku} x{qty} → {folder.name}"))
@@ -100,10 +111,7 @@ async def to_project(session: AsyncSession, item_id: int, qty: int, project_fold
 
 async def chem_out(session: AsyncSession, item_id: int, qty: int, user_id: int | None) -> Item:
     """Химия: списание тюбика руками при выбрасывании (в сборку не идёт)."""
-    it = await _get(session, item_id)
-    if it.qty < qty:
-        raise ValueError(f"Остаток {it.qty}, списать просят {qty}")
-    it.qty -= qty
+    it = await _decrement(session, item_id, qty, "Химия: списать просят")
     session.add(StockMove(item_id=it.id, mtype="brak", qty=qty, reason="Тюбик выброшен", user_id=user_id))
     await session.commit()
     log.info("Химия списана: %s x%s", it.sku, qty)
