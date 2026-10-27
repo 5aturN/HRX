@@ -25,3 +25,11 @@ backend/uploads/
 
 # Локальные инструменты (ngrok и т.п., не пушим)
 .tools/
+
+# Логи (ротация, только локально)
+logs/
+!logs/.gitkeep
+
+# Бэкапы (только локально и в томах compose)
+backups/
+!backups/.gitkeep

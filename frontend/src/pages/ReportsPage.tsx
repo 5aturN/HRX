@@ -1,6 +1,6 @@
 // Отчёты: фильтр по датам, лента движений, Excel.
 import { useEffect, useState } from "react";
-import { api } from "../api/client";
+import { api, downloadExcel } from "../api/client";
 import { tgColors } from "../theme";
 import { toast } from "../App";
 
@@ -12,7 +12,7 @@ export default function ReportsPage() {
   const c = tgColors();
   const load = async () => { setBusy(true); try { let q = "/api/moves?"; if (df) q += "date_from=" + df + "&"; if (dto) q += "date_to=" + dto; setRows(await api(q)); } catch (e: any) { toast(e.message, false); } setBusy(false); };
   useEffect(() => { load(); }, []);
-  const xl = () => { const tg = (window as any).Telegram?.WebApp; let q = "/api/report/excel?init=" + encodeURIComponent(tg?.initData || ""); if (df) q += "&date_from=" + df; if (dto) q += "&date_to=" + dto; window.open(q, "_blank"); toast("Excel формируется"); };
+  const xl = async () => { try { let q = "/api/report/excel?"; if (df) q += "date_from=" + df + "&"; if (dto) q += "date_to=" + dto; await downloadExcel(q, "otchet.xlsx"); toast("Excel скачан"); } catch (e: any) { toast(e.message || "Не удалось скачать", false); } };
   const inp: any = { background: c.card, color: c.text };
   return (
     <div>

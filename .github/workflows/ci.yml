@@ -1,0 +1,43 @@
+# HRXWarehouse — непрерывная проверка: бэкенд (pytest + ruff) и фронт (tsc + build).
+# Срабатывает на пуш и на pull request в любую ветку.
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  # Бэкенд: тесты и линтер. Гоняются на SQLite по умолчанию из конфига,
+  # PostgreSQL для юнит-тестов не нужен.
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Зависимости бэкенда
+        run: pip install -r backend/requirements.txt
+      - name: Линтер ruff
+        run: |
+          pip install ruff
+          # Проверяем деплой-скрипты. backend/app намеренно не трогаем:
+          # правится отдельной задачей, чтобы не смешивать деплой с рефакторингом.
+          ruff check backend/scripts/
+      - name: Тесты pytest
+        run: cd backend && python -m pytest -q
+
+  # Фронтенд: проверка типов и прод-сборка (аналог Dockerfile.frontend).
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Зависимости фронта
+        run: cd frontend && npm ci
+      - name: Проверка типов (tsc)
+        run: cd frontend && npx tsc --noEmit
+      - name: Прод-сборка (vite build)
+        run: cd frontend && npm run build

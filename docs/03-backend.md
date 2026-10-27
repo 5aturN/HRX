@@ -7,7 +7,7 @@ FastAPI + async SQLAlchemy. Все ошибки русским текстом, �
 ```
 backend/app/
   core/      — настройки (.env), БД (WAL), проверка initData, логи
-  models/    — 16 таблиц (tables.py)
+  models/    — 18 таблиц (tables.py)
   schemas/   — pydantic: приёмка, сборка, движения
   services/  — приёмка, сборка, движения+уведомления, отчёты
   routers/   — deps (кто ты и твои роли), receipt, assemble, moves, admin
@@ -30,3 +30,6 @@ Excel из двух листов: Остатки (на сейчас) и Движ
 
 ### Доступ (`routers/deps.py`)
 `current_user` — по initData, новичок уходит в `pending`. `need_roles(...)` — проверка ролей, `admin` проходит везде.
+
+### Прод-закалка (`main.py`, `core/`)
+`lifespan` создаёт `uploads/backups/logs`, на выходе закрывает пул БД. `GET /api/health` (жив) + `GET /api/ready` (200/503 по базе, вне лимита). Лимит пикселей `MAX_IMAGE_PIXELS=40 млн`, ротация логов 5 МБ × 5, лимит 120/мин с IP (health/ready вне лимита). `alembic upgrade head` — миграции 0001..0005_low_notified.

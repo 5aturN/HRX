@@ -1,4 +1,5 @@
 """Последние движения + этикетка для печати."""
+import html
 import logging
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
@@ -25,4 +26,6 @@ async def label(item_id: int, session: AsyncSession = Depends(get_session), user
     it = await session.get(Item, item_id)
     if it is None:
         raise HTTPException(status_code=404, detail="Позиция не найдена")
-    return f"<html><head><meta charset=utf-8><title>{it.sku}</title></head><body style=\"font-family:sans-serif;text-align:center\"><h1>{it.sku}</h1><p>{it.name}</p><p>Остаток: {it.qty}</p><p>qr:{it.id}</p></body></html>"
+    sku = html.escape(it.sku, quote=True)
+    name = html.escape(it.name, quote=True)
+    return f"<html><head><meta charset=utf-8><title>{sku}</title></head><body style=\"font-family:sans-serif;text-align:center\"><h1>{sku}</h1><p>{name}</p><p>Остаток: {it.qty}</p><p>qr:{it.id}</p></body></html>"

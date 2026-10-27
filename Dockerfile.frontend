@@ -1,0 +1,17 @@
+# HRXWarehouse — отдельная сборка фронтенда (Node 24 -> dist/).
+# Использование:
+#   docker build -f Dockerfile.frontend -t hrx-front .          # просто проверить сборку
+#   docker build -f Dockerfile.frontend --output frontend/dist . # забрать dist/ наружу
+# В docker-compose.yml API собирает фронт сам (первый этап Dockerfile.backend),
+# этот файл нужен для CI-проверки и ручной сборки.
+FROM node:24-slim AS build
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+# tsc && vite build (см. frontend/package.json) — упадёт при ошибках типов.
+RUN npm run build
+
+# Пустая финальная стадия: собранный dist/ забирается через --output.
+FROM scratch AS export
+COPY --from=build /app/dist/ /

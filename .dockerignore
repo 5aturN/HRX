@@ -1,0 +1,46 @@
+# HRXWarehouse — .dockerignore: не тащим в образ и в контекст сборки
+# локальные данные, секреты, кэши и доки.
+
+# Git и системное
+.git/
+.gitignore
+.env
+.venv/
+venv/
+
+# Кэши и мусор Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+.ruff_cache/
+
+# Локальные базы (в проде — том pgdata, не файлы)
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Загрузки и выгрузки (в проде приедут томами uploads/backups/logs)
+uploads/
+backend/uploads/
+backups/
+logs/
+
+# Фронтенд: node_modules и чужой dist не копируем — соберём сами на этапе front-build
+frontend/node_modules/
+frontend/dist/
+
+# Тесты, сиды и dev-утилиты в рантайм-образе не нужны (гоняются в CI)
+backend/tests/
+backend/pytest.ini
+backend/create_db.py
+backend/seed.py
+backend/seed_catalog.py
+.tools/
+
+# Доки и служебное
+*.md
+docs/
+knowledge/
+.github/
